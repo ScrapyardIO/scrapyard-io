@@ -1,6 +1,6 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "dept-of-scrapyard-robotics/scrapyard-io",
+    "name": "scrapyard-io/scrapyard-io",
     "type": "project",
     "description": "The skeleton application for the ScrapyardIO framework.",
     "keywords": [
@@ -10,6 +10,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "dept-of-scrapyard-robotics/adxl345": "^0.5.0",
         "scrapyard-io/framework": "^0.5.0"
     },
     "require-dev": {

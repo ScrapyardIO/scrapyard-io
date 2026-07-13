@@ -1,7 +1,8 @@
 
 <p align="center">
-<a href="https://packagist.org/packages/scrapyard-io/framework"><img src="https://img.shields.io/packagist/v/scrapyard-io/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/scrapyard-io/framework"><img src="https://img.shields.io/packagist/l/scrapyard-io/framework" alt="License"></a>
+<a href="https://packagist.org/packages/scrapyard-io/scrapyard-io"><img src="https://img.shields.io/packagist/dt/scrapyard-io/scrapyard-io" alt="Total Downloads"></a>
+<a href="https://packagist.org/packages/scrapyard-io/scrapyard-io"><img src="https://img.shields.io/packagist/v/scrapyard-io/scrapyard-io" alt="Latest Stable Version"></a>
+<a href="https://packagist.org/packages/scrapyard-io/scrapyard-io"><img src="https://img.shields.io/packagist/l/scrapyard-io/scrapyard-io" alt="License"></a>
 </p>
 
 ## About ScrapyardIO
