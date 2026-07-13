@@ -3,12 +3,12 @@
 
 use Symfony\Component\Console\Input\ArgvInput;
 
-define('SCRAPYARD_IO_START', microtime(true));
+define('KIT_START', microtime(true));
 
 // Register the Composer autoloader...
 require __DIR__.'/vendor/autoload.php';
 
-// Boostrap ScrapyardIO and handle the command...
+// Bootstrap ScrapyardIO and handle the command...
 $app = require_once __DIR__.'/bootstrap/app.php';
 
 $status = $app->handleCommand(new ArgvInput);
