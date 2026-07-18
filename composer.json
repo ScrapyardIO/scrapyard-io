@@ -9,17 +9,11 @@
     ],
     "license": "MIT",
     "require": {
-<<<<<<< Updated upstream
-        "php": "^8.3",
-        "dept-of-scrapyard-robotics/adxl345": "^0.5.0",
-        "scrapyard-io/framework": "^0.5.0"
-=======
         "php": "^8.4|^8.5|^8.6",
         "ext-fileinfo": "*",
         "ext-intl": "*",
         "ext-mbstring": "*",
         "scrapyard-io/framework": "^0.5.1"
->>>>>>> Stashed changes
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -46,26 +40,18 @@
             "Composer\\Config::disableProcessTimeout"
         ],
         "test": [],
-<<<<<<< Updated upstream
-        "post-autoload-dump": [],
-=======
         "post-autoload-dump": [
             "Fabricate\\Core\\ComposerScripts::postAutoloadDump",
             "@php workshop package:discover --ansi"
         ],
->>>>>>> Stashed changes
         "post-update-cmd": [],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
         ],
         "post-create-project-cmd": [],
-<<<<<<< Updated upstream
-        "pre-package-uninstall": []
-=======
         "pre-package-uninstall": [
             "Fabricate\\Core\\ComposerScripts::prePackageUninstall"
         ]
->>>>>>> Stashed changes
     },
     "extra": {
         "scrapyard-io": {
@@ -77,26 +63,32 @@
         "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {
-<<<<<<< Updated upstream
-            "pestphp/pest-plugin": true,
-            "php-http/discovery": true
+            "pestphp/pest-plugin": true
         }
     },
     "repositories": [
         {
             "type": "path",
-            "url": "scrapyard/*",
+            "url": "scrapyard-io/*",
+            "options": {
+                "symlink": true
+            }
+        },
+        {
+            "type": "path",
+            "url": "microscrap/*",
+            "options": {
+                "symlink": true
+            }
+        },
+        {
+            "type": "path",
+            "url": "dept-of-scrapyard-robotics/*",
             "options": {
                 "symlink": true
             }
         }
     ],
-=======
-            "pestphp/pest-plugin": true
-        }
-    },
-    
->>>>>>> Stashed changes
     "minimum-stability": "dev",
     "prefer-stable": true
 }
