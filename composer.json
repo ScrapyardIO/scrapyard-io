@@ -10,13 +10,15 @@
     "license": "MIT",
     "require": {
         "php": "^8.4|^8.5|^8.6",
-        "ext-fileinfo": "*",
-        "ext-intl": "*",
-        "ext-mbstring": "*",
-        "scrapyard-io/framework": "^0.5.1"
+        "microscrap/phpdafruit-gfx": "^0.6.0",
+        "scrapyard-io/framework": "^0.6.0",
+        "scrapyard-io/wrench": "^0.6.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "guzzlehttp/psr7": "^2.0",
+        "league/flysystem-path-prefixing": "^3.25.1",
+        "league/flysystem-read-only": "^3.25.1",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
         "pestphp/pest": "^4.7"
@@ -39,7 +41,9 @@
         "dev": [
             "Composer\\Config::disableProcessTimeout"
         ],
-        "test": [],
+        "test": [
+            "@php vendor/bin/pest"
+        ],
         "post-autoload-dump": [
             "Fabricate\\Core\\ComposerScripts::postAutoloadDump",
             "@php workshop package:discover --ansi"
@@ -55,7 +59,7 @@
     },
     "extra": {
         "scrapyard-io": {
-            "dont-discover": []
+          "dont-discover": []
         }
     },
     "config": {
@@ -66,29 +70,6 @@
             "pestphp/pest-plugin": true
         }
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "scrapyard-io/*",
-            "options": {
-                "symlink": true
-            }
-        },
-        {
-            "type": "path",
-            "url": "microscrap/*",
-            "options": {
-                "symlink": true
-            }
-        },
-        {
-            "type": "path",
-            "url": "dept-of-scrapyard-robotics/*",
-            "options": {
-                "symlink": true
-            }
-        }
-    ],
     "minimum-stability": "dev",
     "prefer-stable": true
 }
