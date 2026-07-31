@@ -2,14 +2,14 @@
 
 namespace App\Sketches;
 
-use Fabricate\Contracts\Core\VisualPresentation;
-use Fabricate\Contracts\Framebuffers\Enums\BitDepth;
-use Fabricate\Contracts\Sketches\SketchLoopResult;
-use Fabricate\NutsAndBolts\MagicAliases\Font;
-use Fabricate\NutsAndBolts\MagicAliases\Visual;
-use Fabricate\Rendering\Fonts\ClassicFont;
+use Fabricate\UX\Color;
+use Fabricate\UX\Layout\Align;
+use Fabricate\UX\Node;
+use ScrapyardIO\UX\Chrome\Panel;
+use ScrapyardIO\UX\Support\Fonts;
+use ScrapyardIO\UX\Text\Label;
 
-class Welcome extends Sketch
+class Welcome extends UXSketch
 {
     /**
      * The sketch description.
@@ -20,17 +20,16 @@ class Welcome extends Sketch
 
     protected string $label = 'ScrapyardIO';
 
-    protected int $targetFps = 60;
+    /**
+     * Splash scale ceiling — classic 5x7 at size 3+ reads as a brick wall on
+     * 240x320. The label picks the largest size up to this that fits the panel,
+     * which is why the same tree is legible on a 128x64 OLED.
+     */
+    protected int $maxTextSize = 2;
 
-    protected ?VisualPresentation $screen = null;
+    protected Panel $backdrop;
 
-    protected bool $animateBackground = false;
-
-    protected int $textSize = 1;
-
-    protected int $textColor = 1;
-
-    protected int $frame = 0;
+    protected Label $splash;
 
     /**
      * Registered font names available for cycling.
@@ -46,93 +45,55 @@ class Welcome extends Sketch
     protected float $fontCycleSeconds = 10.0;
 
     /**
-     * Splash scale ceiling — classic 5x7 at size 3+ reads as a brick wall on 240x320.
+     * Centre the splash on an opaque backdrop.
+     *
+     * There are no coordinates here at all. Align asks the label how big it wants
+     * to be and places it in the middle, so nothing in this sketch has to know
+     * the surface size — and the backdrop being opaque is what lets the stage
+     * erase the previous splash by repainting from it when the font changes.
      */
-    protected int $maxTextSize = 2;
-
-    /**
-     * Prepare the sketch before the first loop tick.
-     */
-    public function boot(): void
+    protected function build(): Node
     {
-        $this->screen = Visual::main();
+        $this->splash = Label::of($this->label, Color::white())->fitTextTo($this->maxTextSize);
+        $this->backdrop = Panel::of(Color::black())->add(Align::centered($this->splash));
 
-        if (is_null($this->screen)) {
-            $this->bootConsole();
+        return $this->backdrop;
+    }
 
-            return;
-        }
-
-        $this->fontNames = $this->drawableFontNames();
+    protected function booted(): void
+    {
+        $this->fontNames = Fonts::drawableNames();
         $this->fontIndex = 0;
         $this->fontSwitchedAt = hrtime(true) / 1e9;
-
-        $this->animateBackground = $this->screen->formatSpec()->bit_depth !== BitDepth::B1;
-        $this->textColor = $this->defaultInk();
         $this->applyActiveFont();
 
         $width = $this->screen->width();
         $height = $this->screen->height();
 
         $this->info('Booting ScrapyardIO welcome…');
-        $this->info("Display ready: {$width}x{$height}".($this->animateBackground ? ' (animated background)' : ''));
+        $this->info("Display ready: {$width}x{$height}");
         $this->info('Cycling fonts: '.($this->fontNames === [] ? '(none)' : implode(', ', $this->fontNames)));
         $this->info('Press Ctrl+C to stop.');
-
-        $this->drawFrame(0.0);
     }
 
     /**
-     * Execute one cooperative tick of the sketch.
+     * The wash is offered every frame and the panel decides what it costs.
+     *
+     * Consecutive frames often land on the same packed colour, and a 1-bit panel
+     * packs the whole wash to the same unlit pixel, so the backdrop treats those
+     * as no change at all. That is why this asks nothing about the target: a
+     * still splash on an SSD1306 transmits nothing without the sketch knowing it
+     * is talking to one.
      */
-    public function loop(): SketchLoopResult
+    protected function sample(float $dt): void
     {
-        if (is_null($this->screen)) {
-            usleep(100_000);
+        $now = hrtime(true) / 1e9;
 
-            return SketchLoopResult::CONTINUE;
-        }
-
-        if ($this->screen->shouldClose()) {
-            $this->info('Window closed — stopping welcome.');
-
-            return SketchLoopResult::STOP;
-        }
-
-        $loopStart = hrtime(true);
-        $nowSeconds = $loopStart / 1e9;
-        $this->maybeAdvanceFont($nowSeconds);
-        $this->drawFrame($nowSeconds);
-        $this->frame++;
-        $this->paceFrame($loopStart);
-
-        if ($this->screen->shouldClose()) {
-            $this->info('Window closed — stopping welcome.');
-
-            return SketchLoopResult::STOP;
-        }
-
-        return SketchLoopResult::CONTINUE;
+        $this->maybeAdvanceFont($now);
+        $this->backdrop->setColor($this->washAt($now));
     }
 
-    /**
-     * Release resources after the loop ends or fails.
-     */
-    public function shutdown(): void
-    {
-        if (! is_null($this->screen)) {
-            if (! $this->screen->shouldClose()) {
-                $this->screen->clear(0)->present();
-            }
-
-            $this->screen->close();
-            $this->screen = null;
-        }
-
-        $this->info('Welcome closed. Welcome to ScrapyardIO.');
-    }
-
-    protected function bootConsole(): void
+    protected function bootWithoutDisplay(): void
     {
         $this->info('Booting ScrapyardIO welcome (console — no main display)…');
         $this->writeCenteredCli($this->label);
@@ -154,126 +115,28 @@ class Welcome extends Sketch
         $this->applyActiveFont();
     }
 
+    /**
+     * Changing the font remeasures the label, which re-runs the fit and re-centres
+     * it. Both used to be this sketch's problem.
+     */
     protected function applyActiveFont(): void
     {
-        if (is_null($this->screen) || $this->fontNames === []) {
+        if ($this->fontNames === []) {
             return;
         }
 
-        $name = $this->fontNames[$this->fontIndex];
-        $this->screen->setFont($name);
-        $this->textSize = $this->largestFittingTextSize();
+        $this->splash->setFont($this->fontNames[$this->fontIndex]);
     }
 
     /**
-     * Skip empty stubs (U8g2 / make:font scaffolding) that have no bitmap payload.
-     *
-     * @return array<int, string>
+     * A slow hue wash, declared as RGB and packed by whatever the surface is.
+     * The per-depth packing this used to carry now lives in Color.
      */
-    protected function drawableFontNames(): array
+    protected function washAt(float $nowSeconds): Color
     {
-        $names = [];
+        [$r, $g, $b] = $this->hsvToRgb(fmod(max(0.0, $nowSeconds) * 0.08, 1.0), 0.55, 0.35);
 
-        foreach (array_keys(Font::listFonts()) as $name) {
-            if ($name === 'classic') {
-                $names[] = $name;
-
-                continue;
-            }
-
-            $font = Font::font($name);
-
-            if ($font instanceof ClassicFont || $font->hasBitmapData()) {
-                $names[] = $name;
-            }
-        }
-
-        return $names;
-    }
-
-    protected function drawFrame(float $nowSeconds): void
-    {
-        if (is_null($this->screen)) {
-            return;
-        }
-
-        if ($this->animateBackground) {
-            $this->screen->fill($this->packBackgroundColor($nowSeconds));
-        } else {
-            $this->screen->clear(0);
-        }
-
-        $this->screen->setTextSize($this->textSize);
-        $this->screen->setTextColor($this->textColor);
-        $this->screen->setTextWrap(false);
-
-        // Adafruit custom fonts report bounds relative to the baseline cursor;
-        // subtract x1/y1 so the visual box (not the cursor) is centered.
-        $bounds = $this->screen->getTextBounds($this->label, 0, 0);
-        $x = (int) intdiv($this->screen->width() - $bounds['w'], 2) - $bounds['x1'];
-        $y = (int) intdiv($this->screen->height() - $bounds['h'], 2) - $bounds['y1'];
-
-        $this->screen
-            ->setCursor($x, $y)
-            ->print($this->label)
-            ->present();
-    }
-
-    protected function largestFittingTextSize(): int
-    {
-        if (is_null($this->screen)) {
-            return 1;
-        }
-
-        $width = $this->screen->width();
-        $height = $this->screen->height();
-        $size = 1;
-        $ceiling = max(1, $this->maxTextSize);
-
-        while ($size < $ceiling) {
-            $next = $size + 1;
-            $this->screen->setTextSize($next);
-            $bounds = $this->screen->getTextBounds($this->label, 0, 0);
-
-            if ($bounds['w'] <= 0 || $bounds['h'] <= 0 || $bounds['w'] > $width || $bounds['h'] > $height) {
-                $this->screen->setTextSize($size);
-
-                return $size;
-            }
-
-            $size = $next;
-        }
-
-        $this->screen->setTextSize($size);
-
-        return $size;
-    }
-
-    protected function defaultInk(): int
-    {
-        return match ($this->screen->formatSpec()->bit_depth) {
-            BitDepth::B1 => 1,
-            BitDepth::B12 => 0x0FFF,
-            BitDepth::B16 => 0xFFFF,
-            BitDepth::B18 => 0xFCFCFC,
-            default => 0xFFFFFFFF,
-        };
-    }
-
-    /**
-     * Slow hue wash packed for the active pixel format.
-     */
-    protected function packBackgroundColor(float $nowSeconds): int
-    {
-        $hue = fmod(max(0.0, $nowSeconds) * 0.08, 1.0);
-        [$r, $g, $b] = $this->hsvToRgb($hue, 0.55, 0.35);
-
-        return match ($this->screen->formatSpec()->bit_depth) {
-            BitDepth::B12 => $this->packRgb444($r, $g, $b),
-            BitDepth::B16 => $this->packRgb565($r, $g, $b),
-            BitDepth::B18 => $this->packRgb666($r, $g, $b),
-            default => (($r & 0xFF) << 24) | (($g & 0xFF) << 16) | (($b & 0xFF) << 8) | 0xFF,
-        };
+        return Color::rgb($r, $g, $b);
     }
 
     /**
@@ -303,42 +166,13 @@ class Welcome extends Sketch
         ];
     }
 
-    protected function packRgb444(int $r, int $g, int $b): int
-    {
-        return (($r & 0xF0) << 4) | ($g & 0xF0) | (($b & 0xF0) >> 4);
-    }
-
-    protected function packRgb565(int $r, int $g, int $b): int
-    {
-        return (($r & 0xF8) << 8) | (($g & 0xFC) << 3) | (($b & 0xF8) >> 3);
-    }
-
-    /**
-     * ST77xx COLOR18 left-justified RGB666 word (`RRRRRRxx GGGGGGxx BBBBBBxx`).
-     */
-    protected function packRgb666(int $r, int $g, int $b): int
-    {
-        return (($r & 0xFC) << 16) | (($g & 0xFC) << 8) | ($b & 0xFC);
-    }
-
     protected function writeCenteredCli(string $text): void
     {
         $width = 40;
         $pad = max(0, intdiv($width - strlen($text), 2));
-        $line = str_repeat(' ', $pad).$text;
 
         $this->info(str_repeat('=', $width));
-        $this->info($line);
+        $this->info(str_repeat(' ', $pad).$text);
         $this->info(str_repeat('=', $width));
-    }
-
-    protected function paceFrame(int $loopStartNs): void
-    {
-        $budgetNs = (int) (1_000_000_000 / $this->targetFps);
-        $remainingNs = $budgetNs - (hrtime(true) - $loopStartNs);
-
-        if ($remainingNs > 1_000) {
-            usleep((int) ($remainingNs / 1_000));
-        }
     }
 }
