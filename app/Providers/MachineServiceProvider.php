@@ -4,15 +4,15 @@ namespace App\Providers;
 
 use Fabricate\NutsAndBolts\ServiceProvider;
 
-class ProgramServiceProvider extends ServiceProvider
+class MachineServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-
+        //
     }
 
     public function boot(): void
     {
-
+        //
     }
 }

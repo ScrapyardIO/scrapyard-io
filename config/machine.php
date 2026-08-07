@@ -1,7 +1,7 @@
 <?php
 
 return [
-    /*
+  /*
    |--------------------------------------------------------------------------
    | Application Name
    |--------------------------------------------------------------------------
@@ -31,11 +31,6 @@ return [
     |--------------------------------------------------------------------------
     | Application Debug Mode
     |--------------------------------------------------------------------------
-    |
-    | When your application is in debug mode, detailed error messages with
-    | stack traces will be shown on every error that occurs within your
-    | application. If disabled, a simple generic error page is shown.
-    |
     */
 
     'debug' => (bool) env('APP_DEBUG', false),
@@ -44,31 +39,15 @@ return [
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
-    |
-    | Here you may specify the default timezone for your application, which
-    | will be used by the PHP date and date-time functions. The timezone
-    | is set to "UTC" by default as it is suitable for most use cases.
-    |
     */
 
-    'timezone' => 'UTC',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Application Locale Configuration
-    |--------------------------------------------------------------------------
-    |
-    | The application locale determines the default locale that will be used
-    | by ScrapyardIO's translation / localization methods. This option can be
-    | set to any locale for which you plan to have translation strings.
-    |
-    */
+    'timezone' => env('APP_TIMEZONE', 'UTC'),
 
     'locale' => env('APP_LOCALE', 'en'),
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
-    'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
+    'schedule_timezone' => env('SCHEDULE_TIMEZONE'),
 
     /*
     |--------------------------------------------------------------------------
@@ -91,7 +70,7 @@ return [
         ),
     ],
 
-    /*
+   /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers
     |--------------------------------------------------------------------------
