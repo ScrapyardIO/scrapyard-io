@@ -1,16 +1,14 @@
 <?php
 
-use App\Sketches\BouncingShapes;
-use App\Sketches\SeesawNeoSlider;
-use App\Sketches\Welcome;
 use Fabricate\Console\OutputStyle;
-use Fabricate\Contracts\Core\VisualPresentation;
 use Fabricate\Contracts\Sketches\SketchLoopResult;
-use Fabricate\NutsAndBolts\Geometry\Rect;
 use Fabricate\UX\Color;
 use ScrapyardIO\UX\Tests\Support\StageHarness;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
+use Tests\Support\HeadlessBouncingShapes;
+use Tests\Support\HeadlessNeoSlider;
+use Tests\Support\HeadlessWelcome;
 
 /**
  * The three rewritten sketches, driven headless.
@@ -20,55 +18,6 @@ use Symfony\Component\Console\Output\BufferedOutput;
  * lays out against a real surface and puts ink down. Each double replaces only
  * the display, and the sketch's own boot/loop/shutdown runs unchanged.
  */
-final class HeadlessWelcome extends Welcome
-{
-    public function __construct(private readonly VisualPresentation $surface) {}
-
-    protected function presentation(): ?VisualPresentation
-    {
-        return $this->surface;
-    }
-}
-
-final class HeadlessBouncingShapes extends BouncingShapes
-{
-    public function __construct(private readonly VisualPresentation $surface) {}
-
-    protected function presentation(): ?VisualPresentation
-    {
-        return $this->surface;
-    }
-
-    /**
-     * Where a named shape's node actually sits, so a test can watch one shape
-     * rather than the union of all the ink on the panel.
-     */
-    public function boxOf(string $name): Rect
-    {
-        return $this->shapes[$name]['node']->globalBounds();
-    }
-}
-
-/**
- * The NeoSlider needs an I2C circuit to sample, so this double keeps the tree
- * and skips the hardware.
- */
-final class HeadlessNeoSlider extends SeesawNeoSlider
-{
-    public function __construct(private readonly VisualPresentation $surface) {}
-
-    protected function presentation(): ?VisualPresentation
-    {
-        return $this->surface;
-    }
-
-    protected function booted(): void {}
-
-    protected function sample(float $dt): void {}
-
-    protected function teardown(): void {}
-}
-
 function headless(object $sketch): object
 {
     $sketch->configureIO(new ArrayInput([]), new OutputStyle(new ArrayInput([]), new BufferedOutput()));
